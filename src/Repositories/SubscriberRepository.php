@@ -2,37 +2,54 @@
 
 namespace App\Repositories;
 
-use App\Config\Database;
+use PDO;
 use App\Models\Subscriber;
+use App\Config\DatabaseConnection;
 
 class SubscriberRepository
 {
 
   private $conn;
 
-    public function __construct()
+    public function __construct(DatabaseConnection $databaseConnection)
     {
-        $this->conn = Database::getConnection();
+        $this->conn = $databaseConnection->createConnection();
     }
 
     public function subscriberExists($email)
     {
-        $query = "SELECT * FROM subscribers WHERE email = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('s', $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
+      $query = "SELECT COUNT(*) FROM subscribers WHERE email = :email";
+      $stmt = $this->conn->prepare($query);
+      $stmt->bindParam(':email', $email);
+      $stmt->execute();
 
-        return $result->num_rows > 0;
+      if ($stmt->fetchColumn() === 0) {
+        return false;
+      } else {
+        return $this->getSubscriberDetails($email);
+      }
     }
 
     public function insertSubscriber(Subscriber $subscriber)
     {
-        $query = "INSERT INTO subscribers (email, name, last_name, status) VALUES (?, ?, ?, ?)";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('ssss', $subscriber->email, $subscriber->name, $subscriber->lastName, $subscriber->status);
-        $stmt->execute();
+      $query = "INSERT INTO subscribers (email, name, last_name, status) VALUES (:email, :name, :last_name, :status)";
+      $stmt = $this->conn->prepare($query);
+      $stmt->bindParam(':email', $subscriber->email);
+      $stmt->bindParam(':name', $subscriber->name);
+      $stmt->bindParam(':last_name', $subscriber->lastName);
+      $stmt->bindParam(':status', $subscriber->status);
+      $stmt->execute();
 
-        return $stmt->id;
+      return $this->getSubscriberDetails($subscriber->email);
+
+    }
+
+    public function getSubscriberDetails($email)
+    {
+        $query = "SELECT * FROM subscribers WHERE email = :email";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
