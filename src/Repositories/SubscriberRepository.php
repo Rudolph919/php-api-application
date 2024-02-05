@@ -52,4 +52,13 @@ class SubscriberRepository
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+
+    public function getAllSubscribers()
+    {
+        $query = "SELECT * FROM subscribers";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
