@@ -5,3 +5,5 @@ CREATE TABLE subscribers (
   last_name VARCHAR(255) NOT NULL,
   status VARCHAR(255) NOT NULL
 );
+
+CREATE INDEX idx_subscribers_email ON subscribers(email);
